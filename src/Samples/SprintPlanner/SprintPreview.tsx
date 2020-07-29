@@ -137,18 +137,21 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
         const types = await client.queryByWiql(model,"MSHackathon2020","MSHackathon2020",false,100);
         var workItemsResult = types.workItems;
         var workItemArray = new ArrayItemProvider<ITableItem>([]);
- 
+        
         for(var i = 0; i<workItemsResult.length;i++)
         {
             const types = await client.getWorkItem(workItemsResult[i].id,"MSHackathon2020",['System.Title','System.AssignedTo','Microsoft.VSTS.Common.Priority'],new Date(),0);
-            
-            var workItem : ITableItem = {
-                workItem: { iconProps: { iconName: types.fields["System.AssignedTo"]["_links"]["avatar"]["href"] }, text: types.fields["System.Title"] },
-                wid: workItemsResult[i].id,
-                assignedTo: types.fields["System.AssignedTo"]["displayName"],
-                priority: types.fields["Microsoft.VSTS.Common.Priority"]
+
+            if(this.props.selectedMembers.find(Element =>  Element == types.fields["System.AssignedTo"]["displayName"]))
+            {
+                var workItem : ITableItem = {
+                    workItem: { iconProps: { iconName: types.fields["System.AssignedTo"]["_links"]["avatar"]["href"] }, text: types.fields["System.Title"] },
+                    wid: workItemsResult[i].id,
+                    assignedTo: types.fields["System.AssignedTo"]["displayName"],
+                    priority: types.fields["Microsoft.VSTS.Common.Priority"]
+                }
+                workItemArray.value.push(workItem);
             }
-            workItemArray.value.push(workItem);
         }
         return workItemArray;
     }
