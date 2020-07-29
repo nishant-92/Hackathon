@@ -63,6 +63,9 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
             this.isDialogOpen = false;
             this.callback(false);
         };
+        console.log("Inside sprint preview");
+        console.log("Sprint Duration:" + this.props.selectedDuration);
+        console.log("Selected Team Members:" + this.props.selectedMembers);
         return (
             <Page className="sample-hub flex-grow">
                 <Header title="Sprint Planner" />
