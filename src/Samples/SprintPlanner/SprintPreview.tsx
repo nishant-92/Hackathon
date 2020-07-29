@@ -23,7 +23,6 @@ import { CommonServiceIds, getClient, IProjectPageService } from "azure-devops-e
 import { IWorkItemFormNavigationService, WorkItemTrackingRestClient, WorkItemTrackingServiceIds } from "azure-devops-extension-api/WorkItemTracking";
 
 import { showRootComponent } from "../../Common";
-import IProps from "./Prop";
 
 type callback = (status:boolean) => void;
 type PreviewProp = {

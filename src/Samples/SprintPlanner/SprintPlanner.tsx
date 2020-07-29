@@ -7,6 +7,7 @@ import { Button } from "azure-devops-ui/Button";
 import { ObservableArray, ObservableValue } from "azure-devops-ui/Core/Observable";
 import { localeIgnoreCaseComparer } from "azure-devops-ui/Core/Util/String";
 import { Dropdown } from "azure-devops-ui/Dropdown";
+import { Checkbox } from "azure-devops-ui/Checkbox";
 import { ListSelection, ISimpleListCell } from "azure-devops-ui/List";
 import { IListBoxItem } from "azure-devops-ui/ListBox";
 import { Header } from "azure-devops-ui/Header";
@@ -21,9 +22,12 @@ import { ArrayItemProvider } from "azure-devops-ui/Utilities/Provider";
 
 import { CommonServiceIds, getClient, IProjectPageService } from "azure-devops-extension-api";
 import { IWorkItemFormNavigationService, WorkItemTrackingRestClient, WorkItemTrackingServiceIds } from "azure-devops-extension-api/WorkItemTracking";
-
 import { showRootComponent } from "../../Common";
+import { CoreRestClient } from "azure-devops-extension-api/Core";
 
+const firstCheckbox = new ObservableValue<boolean>(false);
+const secondCheckbox = new ObservableValue<boolean>(false);
+const thirdCheckbox = new ObservableValue<boolean>(false);
 
 class SprintPlannerContent extends React.Component<{}, {}> {
 
@@ -31,6 +35,7 @@ class SprintPlannerContent extends React.Component<{}, {}> {
     private workItemTypeValue = new ObservableValue("Bug");
     private selection = new ListSelection();
     private workItemTypes = new ObservableArray<IListBoxItem<string>>();
+    private teamMembers = new ObservableArray<string>();
     private isDialogOpen = new ObservableValue<boolean>(false);
 
     constructor(props: {}) {
@@ -40,6 +45,7 @@ class SprintPlannerContent extends React.Component<{}, {}> {
     public componentDidMount() {
         SDK.init();
         this.loadWorkItemTypes();
+        this.loadAccounts();
     }
 
     public render(): JSX.Element {
@@ -92,9 +98,72 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                         </Observer>
 
                     </div>
+                    <div className="sample-form-section flex-row flex-center">
+                        <div className="flex-column">
+                            <label htmlFor="account-picker">Team members:</label>
+                            <Observer checkboxes={this.teamMembers}>
+                                {
+                                    (props: {checkboxes: Array<string>}) => {
+                                        console.log(props.checkboxes, this.teamMembers);
+                                        console.log(213);
+                                        return props.checkboxes.length ? (
+                                            <div>
+                                                <Checkbox className="sample-account-picker"
+                                                    onChange={(event, checked) => (firstCheckbox.value = checked)}
+                                                    checked={firstCheckbox}
+                                                    label={props.checkboxes[0]}
+                                                />
+                                                <Checkbox className="sample-account-picker"
+                                                    onChange={(event, checked) => (secondCheckbox.value = checked)}
+                                                    checked={secondCheckbox}
+                                                    label={props.checkboxes[1]}
+                                                />
+                                                <Checkbox className="sample-account-picker"
+                                                    onChange={(event, checked) => (thirdCheckbox.value = checked)}
+                                                    checked={thirdCheckbox}
+                                                    label={props.checkboxes[2]}
+                                                />
+                                                </div>
+                                        ) : (
+                                            <div>loading</div>
+                                        );
+                                    }
+                                }
+                            </Observer>
+                        </div>
+                        <Button className="sample-work-item-button" text="New..." onClick={() => this.onOpenNewWorkItemClick()} />
+                    </div>
                 </div>
             </Page>
         );
+    }
+
+    private async loadAccounts(): Promise<void> {
+
+        console.log("Entering load accounts");
+        const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
+        console.log("Get peoject service");
+        const project = await projectService.getProject();
+        console.log("Get project");
+
+        let teamMemberNames: string[] = [];
+
+        if (project)  {
+            const client = await getClient(CoreRestClient);
+            console.log("Get core client");
+            const teamMembers = await client.getTeamMembersWithExtendedProperties(project.name, "MSHackathon2020");
+            console.log("Get team members");
+            teamMemberNames = teamMembers.map(t => t.identity.displayName);
+            teamMemberNames.sort((a, b) => localeIgnoreCaseComparer(a, b));
+
+            console.log("team members:" + teamMemberNames);
+        }
+
+        this.teamMembers.change(0, ...teamMemberNames);
+        console.log("all team member:" + this.teamMembers);
+        console.log("1st team member:" + this.teamMembers.value[0]);
+        console.log("exit team");
+        //this.selection.select(0);
     }
 
     private async loadWorkItemTypes(): Promise<void> {
