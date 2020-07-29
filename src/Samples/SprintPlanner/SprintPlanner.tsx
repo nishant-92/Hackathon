@@ -21,7 +21,6 @@ import { ColumnFill, ColumnMore, renderSimpleCell, Table } from "azure-devops-ui
 import { ArrayItemProvider } from "azure-devops-ui/Utilities/Provider";
 
 import { CommonServiceIds, getClient, IProjectPageService } from "azure-devops-extension-api";
-import { IWorkItemFormNavigationService, WorkItemTrackingRestClient, WorkItemTrackingServiceIds } from "azure-devops-extension-api/WorkItemTracking";
 import { showRootComponent } from "../../Common";
 import { CoreRestClient } from "azure-devops-extension-api/Core";
 
@@ -31,10 +30,8 @@ const thirdCheckbox = new ObservableValue<boolean>(false);
 
 class SprintPlannerContent extends React.Component<{}, {}> {
 
-    private workItemIdValue = new ObservableValue("1");
     private workItemTypeValue = new ObservableValue("Bug");
     private selection = new ListSelection();
-    private workItemTypes = new ObservableArray<IListBoxItem<string>>();
     private teamMembers = new ObservableArray<string>();
     private isDialogOpen = new ObservableValue<boolean>(false);
 
@@ -44,7 +41,6 @@ class SprintPlannerContent extends React.Component<{}, {}> {
 
     public componentDidMount() {
         SDK.init();
-        this.loadWorkItemTypes();
         this.loadAccounts();
     }
 
@@ -57,46 +53,20 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                 <Header title="Sprint Planner" />
                 <div className="page-content">
                     <div className="sample-form-section flex-row flex-center">
-                        <TextField className="sample-work-item-id-input" label="Sprint Duration" value={this.workItemIdValue} onChange={(ev, newValue) => { this.workItemIdValue.value = newValue; }} />
-                        <Button className="sample-work-item-button" text="Open..." onClick={() => this.onOpenExistingWorkItemClick()} />
-                    </div>
-                    <div className="sample-form-section flex-row flex-center">
                         <div className="flex-column">
-                            <label htmlFor="work-item-type-picker">New work item type:</label>
+                            <label htmlFor="work-item-type-picker">Sprint Duration in weeks:</label>
                             <Dropdown<string>
                                 className="sample-work-item-type-picker"
-                                items={this.workItemTypes}
+                                items={[
+                                    { id: "duration1", text: "1 week" },
+                                    { id: "duration2", text: "2 weeks" },
+                                    { id: "duration3", text: "3 weeks" },
+                                    { id: "duration4", text: "4 weeks" },
+                                ]}
                                 onSelect={(event, item) => { this.workItemTypeValue.value = item.data! }}
                                 selection={this.selection}
                             />
                         </div>
-                        <Button className="sample-work-item-button" text="Sprint Preview" onClick={() => {this.isDialogOpen.value = true;}} />
-                         
-                            <Observer isDialogOpen={this.isDialogOpen}>
-                            {(props: { isDialogOpen: boolean }) => {
-                                return props.isDialogOpen ? (
-                                    <Dialog
-                                        titleProps={{ text: "Confirm" }}
-                                        footerButtonProps={[
-                                            {
-                                                text: "Close",
-                                                onClick: onDismiss
-                                            }
-                                        ]}
-                                        onDismiss={onDismiss}
-                                    >
-                                        <Table<Partial<ITableItem>>
-                                            ariaLabel="Food Inventory Table"
-                                            columns={sizableColumns}
-                                            itemProvider={tableItems}
-                                            selection={this.selection}
-                                            onSelect={(event, data) => console.log("Select Row - " + data.index)}
-                                        />
-                                    </Dialog>
-                                ) : null;
-                            }}
-                        </Observer>
-
                     </div>
                     <div className="sample-form-section flex-row flex-center">
                         <div className="flex-column">
@@ -131,7 +101,31 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                                 }
                             </Observer>
                         </div>
-                        <Button className="sample-work-item-button" text="New..." onClick={() => this.onOpenNewWorkItemClick()} />
+                        <Button className="sample-work-item-button" text="Sprint Preview" onClick={() => {this.isDialogOpen.value = true;}} />
+                            <Observer isDialogOpen={this.isDialogOpen}>
+                            {(props: { isDialogOpen: boolean }) => {
+                                return props.isDialogOpen ? (
+                                    <Dialog
+                                        titleProps={{ text: "Confirm" }}
+                                        footerButtonProps={[
+                                            {
+                                                text: "Close",
+                                                onClick: onDismiss
+                                            }
+                                        ]}
+                                        onDismiss={onDismiss}
+                                    >
+                                        <Table<Partial<ITableItem>>
+                                            ariaLabel="Food Inventory Table"
+                                            columns={sizableColumns}
+                                            itemProvider={tableItems}
+                                            selection={this.selection}
+                                            onSelect={(event, data) => console.log("Select Row - " + data.index)}
+                                        />
+                                    </Dialog>
+                                ) : null;
+                            }}
+                        </Observer>
                     </div>
                 </div>
             </Page>
@@ -140,67 +134,20 @@ class SprintPlannerContent extends React.Component<{}, {}> {
 
     private async loadAccounts(): Promise<void> {
 
-        console.log("Entering load accounts");
         const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
-        console.log("Get peoject service");
         const project = await projectService.getProject();
-        console.log("Get project");
 
         let teamMemberNames: string[] = [];
 
         if (project)  {
             const client = await getClient(CoreRestClient);
-            console.log("Get core client");
             const teamMembers = await client.getTeamMembersWithExtendedProperties(project.name, "MSHackathon2020");
-            console.log("Get team members");
             teamMemberNames = teamMembers.map(t => t.identity.displayName);
             teamMemberNames.sort((a, b) => localeIgnoreCaseComparer(a, b));
-
-            console.log("team members:" + teamMemberNames);
         }
 
         this.teamMembers.change(0, ...teamMemberNames);
-        console.log("all team member:" + this.teamMembers);
-        console.log("1st team member:" + this.teamMembers.value[0]);
-        console.log("exit team");
-        //this.selection.select(0);
     }
-
-    private async loadWorkItemTypes(): Promise<void> {
-
-        const projectService = await SDK.getService<IProjectPageService>(CommonServiceIds.ProjectPageService);
-        const project = await projectService.getProject();
-
-        let workItemTypeNames: string[];
-
-        if (!project) {
-            workItemTypeNames = [ "Issue" ];
-        }
-        else {
-            const client = getClient(WorkItemTrackingRestClient);
-            const types = await client.getWorkItemTypes(project.name);
-            workItemTypeNames = types.map(t => t.name);
-            workItemTypeNames.sort((a, b) => localeIgnoreCaseComparer(a, b));
-        }
-
-        this.workItemTypes.push(...workItemTypeNames.map(t => { return { id: t, data: t, text: t } }));
-        this.selection.select(0);
-    }
-
-    private async onOpenExistingWorkItemClick() {
-        const navSvc = await SDK.getService<IWorkItemFormNavigationService>(WorkItemTrackingServiceIds.WorkItemFormNavigationService);
-        navSvc.openWorkItem(parseInt(this.workItemIdValue.value));
-    };
-
-    private async onOpenNewWorkItemClick() {
-        const navSvc = await SDK.getService<IWorkItemFormNavigationService>(WorkItemTrackingServiceIds.WorkItemFormNavigationService);
-        navSvc.openNewWorkItem(this.workItemTypeValue.value, { 
-            Title: "Opened a work item from the Work Item Nav Service",
-            Tags: "extension;wit-service",
-            priority: 1,
-            "System.AssignedTo": SDK.getUser().name,
-         });
-    };
 }
 
 interface ITableItem {
