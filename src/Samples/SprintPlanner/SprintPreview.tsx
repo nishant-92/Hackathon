@@ -20,7 +20,7 @@ import { ColumnFill, ColumnMore, renderSimpleCell, Table } from "azure-devops-ui
 import { ArrayItemProvider, getItemsValue } from "azure-devops-ui/Utilities/Provider";
 
 import { CommonServiceIds, getClient, IProjectPageService } from "azure-devops-extension-api";
-import { IWorkItemFormNavigationService, WorkItemTrackingRestClient, WorkItemTrackingServiceIds } from "azure-devops-extension-api/WorkItemTracking";
+import { IWorkItemFormNavigationService, WorkItemTrackingRestClient, WorkItemTrackingServiceIds,Wiql } from "azure-devops-extension-api/WorkItemTracking";
 
 import { showRootComponent } from "../../Common";
 
@@ -39,19 +39,21 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
     private isDialogOpen : boolean;
     private callback: callback;
     private selection = new ListSelection();
-    private data:PreviewState;
 
     constructor(props: PreviewProp) {
         super(props);
         this.isDialogOpen = props.status;
         this.callback = props.callback;
-        this.data =this.loadTableData();
     }
 
-    
-    
+    state: PreviewState ={
+        status:false,
+        sprintDetails:new ArrayItemProvider<ITableItem>([])
+    }
+
     public componentDidMount() {
         SDK.init();
+        this.loadData();
     }
     
     public render(): JSX.Element {
@@ -75,13 +77,13 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
                             onDismiss={onDismiss}
                             calloutContentClassName = "dialogbox-size"
                         >
-                            <Table<Partial<ITableItem>>
+                            {this.state.status && <Table<Partial<ITableItem>>
                                 ariaLabel="Sprint Preview"
                                 columns={sizableColumns}
-                                itemProvider={this.data.sprintDetails}
+                                itemProvider={this.state.sprintDetails}
                                 selection={this.selection}
                                 onSelect={(event, data) => console.log("Select Row - " + data.index)}
-                            />
+                            />}
                         </Dialog>
                     </div>
                 </div>
@@ -112,6 +114,38 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
                 }
             ]),
         }
+    }
+
+    private loadData():void{
+        var promise = this.allWorkItems();
+        promise.then((data) => {this.setState({
+            status:true,
+            sprintDetails:data
+        })})
+    }
+
+    private async allWorkItems() {
+        const client = getClient(WorkItemTrackingRestClient);
+        const model: Wiql = {
+            query : "select * From WorkItems where [State] = 'Active' OR [State] = 'New' "
+        }
+        const types = await client.queryByWiql(model,"MSHackathon2020","MSHackathon2020",false,100);
+        var workItemsResult = types.workItems;
+        var workItemArray = new ArrayItemProvider<ITableItem>([]);
+ 
+        for(var i = 0; i<workItemsResult.length;i++)
+        {
+            console.log(workItemsResult[i].id);
+            const types = await client.getWorkItem(workItemsResult[i].id,"MSHackathon2020",['System.Title','System.AssignedTo','Microsoft.VSTS.Common.Priority'],new Date(),0);
+            
+            var workItem : ITableItem = {
+                workItem: { iconProps: { iconName: types.fields["System.AssignedTo"]["_links"]["avatar"]["href"] }, text: types.fields["System.Title"] },
+                assignedTo: types.fields["System.AssignedTo"]["displayName"],
+                estimate: types.fields["Microsoft.VSTS.Common.Priority"]
+            }
+            workItemArray.value.push(workItem);
+        }
+        return workItemArray;
     }
 
 }
