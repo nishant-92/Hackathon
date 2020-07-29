@@ -17,7 +17,7 @@ import { Observer } from "azure-devops-ui/Observer";
 import { Card } from "azure-devops-ui/Card";
 import { IHeaderCommandBarItem } from "azure-devops-ui/HeaderCommandBar";
 import { ColumnFill, ColumnMore, renderSimpleCell, Table } from "azure-devops-ui/Table";
-import { ArrayItemProvider } from "azure-devops-ui/Utilities/Provider";
+import { ArrayItemProvider, getItemsValue } from "azure-devops-ui/Utilities/Provider";
 
 import { CommonServiceIds, getClient, IProjectPageService } from "azure-devops-extension-api";
 import { IWorkItemFormNavigationService, WorkItemTrackingRestClient, WorkItemTrackingServiceIds } from "azure-devops-extension-api/WorkItemTracking";
@@ -73,6 +73,7 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
                                 }
                             ]}
                             onDismiss={onDismiss}
+                            calloutContentClassName = "dialogbox-size"
                         >
                             <Table<Partial<ITableItem>>
                                 ariaLabel="Sprint Preview"
@@ -88,7 +89,9 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
         );
     }
 
+
     private loadTableData():PreviewState{
+
         return {
             status:true,
             sprintDetails : new ArrayItemProvider<ITableItem>([
