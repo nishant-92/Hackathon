@@ -26,6 +26,8 @@ const thirdCheckbox = new ObservableValue<boolean>(false);
 
 type SprinPlannerState = {
     showMessage: boolean,
+    selectedDuration: string[],
+    selectedMembers: string[],
 };
 
 class SprintPlannerContent extends React.Component<{}, {}> {
@@ -41,6 +43,8 @@ class SprintPlannerContent extends React.Component<{}, {}> {
 
     state: SprinPlannerState = {
         showMessage: false,
+        selectedDuration: [],
+        selectedMembers: [],
     };
 
     public componentDidMount() {
@@ -64,7 +68,7 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                                     { id: "duration3", text: "3 weeks" },
                                     { id: "duration4", text: "4 weeks" },
                                 ]}
-                                onSelect={(event, item) => { this.workItemTypeValue.value = item.data! }}
+                                onSelect={(event, item) => { this.state.selectedDuration.push(item.text || "")}}
                                 selection={this.selection}
                             />
                         </div>
@@ -80,17 +84,47 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                                         return props.checkboxes.length ? (
                                             <div>
                                                 <Checkbox className="sample-account-picker"
-                                                    onChange={(event, checked) => (firstCheckbox.value = checked)}
+                                                    onChange={(event, checked) => {
+                                                        firstCheckbox.value = checked; 
+                                                        if(checked)
+                                                        {
+                                                            this.state.selectedMembers.push(props.checkboxes[0])
+                                                        }
+                                                        else
+                                                        {
+                                                            this.state.selectedMembers = this.state.selectedMembers.filter((item: string) => item === props.checkboxes[0])
+                                                        }
+                                                    }}
                                                     checked={firstCheckbox}
                                                     label={props.checkboxes[0]}
                                                 />
                                                 <Checkbox className="sample-account-picker"
-                                                    onChange={(event, checked) => (secondCheckbox.value = checked)}
+                                                    onChange={(event, checked) => {
+                                                        secondCheckbox.value = checked;
+                                                        if(checked)
+                                                        {
+                                                            this.state.selectedMembers.push(props.checkboxes[1])
+                                                        }
+                                                        else
+                                                        {
+                                                            this.state.selectedMembers = this.state.selectedMembers.filter((item: string) => item === props.checkboxes[1])
+                                                        }
+                                                    }}
                                                     checked={secondCheckbox}
                                                     label={props.checkboxes[1]}
                                                 />
                                                 <Checkbox className="sample-account-picker"
-                                                    onChange={(event, checked) => (thirdCheckbox.value = checked)}
+                                                    onChange={(event, checked) => {
+                                                        thirdCheckbox.value = checked;
+                                                        if(checked)
+                                                        {
+                                                            this.state.selectedMembers.push(props.checkboxes[2])
+                                                        }
+                                                        else
+                                                        {
+                                                            this.state.selectedMembers = this.state.selectedMembers.filter((item: string) => item === props.checkboxes[2])
+                                                        }
+                                                    }}
                                                     checked={thirdCheckbox}
                                                     label={props.checkboxes[2]}
                                                 />
@@ -102,8 +136,8 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                                 }
                             </Observer>
                         </div>
-                        <Button className="sample-work-item-button" text="Generate Sprint" onClick={() => {this.setState(() => ({ showMessage: true }))}} />
-                        {this.state.showMessage && <SprintPreviewContent {...{status: this.state.showMessage, callback: (status:boolean)=>{this.setState(() => ({ showMessage: status }))}}}/>}
+                        <Button className="sample-work-item-button" text="Generate Sprint" onClick={() => {;this.setState(() => ({ showMessage: true }))}} />
+                        {this.state.showMessage && <SprintPreviewContent {...{status: this.state.showMessage, selectedMembers: this.state.selectedMembers, selectedDuration: this.state.selectedDuration ,callback: (status:boolean)=>{this.setState(() => ({ showMessage: status }))}}}/>}
                     </div>
                 </div>
             </Page>
