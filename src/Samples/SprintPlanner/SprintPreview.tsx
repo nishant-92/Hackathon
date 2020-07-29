@@ -27,6 +27,8 @@ import { showRootComponent } from "../../Common";
 type callback = (status:boolean) => void;
 type PreviewProp = {
     status: boolean;
+    selectedDuration: string[],
+    selectedMembers: string[],
     callback:callback;
 }
 
