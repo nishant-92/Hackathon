@@ -2,7 +2,7 @@
     "manifestVersion": 1,
     "id": "samples",
     "publisher": "NishantGupta",
-    "version": "1.0.72",
+    "version": "1.0.80",
     "name": "SprintPlanner",
     "description": "Azure DevOps extension for generating sprint plans",
     "categories": [

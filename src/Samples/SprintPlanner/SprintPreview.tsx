@@ -92,29 +92,29 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
     }
 
 
-    private loadTableData():PreviewState{
+    // private loadTableData():PreviewState{
 
-        return {
-            status:true,
-            sprintDetails : new ArrayItemProvider<ITableItem>([
-                {
-                    workItem: { iconProps: { iconName: "Home" }, text: "Test task 1" },
-                    assignedTo: "Ankit",
-                    estimate: 2
-                },
-                {
-                    workItem: { iconProps: { iconName: "Home" }, text: "Test task 2" },
-                    assignedTo: "Nishant",
-                    estimate: 1
-                },
-                {
-                    workItem: { iconProps: { iconName: "Home" }, text: "Test task 3" },
-                    assignedTo: "Ashish",
-                    estimate: 3
-                }
-            ]),
-        }
-    }
+    //     return {
+    //         status:true,
+    //         sprintDetails : new ArrayItemProvider<ITableItem>([
+    //             {
+    //                 workItem: { iconProps: { iconName: "Home" }, text: "Test task 1" },
+    //                 assignedTo: "Ankit",
+    //                 estimate: 2
+    //             },
+    //             {
+    //                 workItem: { iconProps: { iconName: "Home" }, text: "Test task 2" },
+    //                 assignedTo: "Nishant",
+    //                 estimate: 1
+    //             },
+    //             {
+    //                 workItem: { iconProps: { iconName: "Home" }, text: "Test task 3" },
+    //                 assignedTo: "Ashish",
+    //                 estimate: 3
+    //             }
+    //         ]),
+    //     }
+    // }
 
     private loadData():void{
         var promise = this.allWorkItems();
@@ -135,25 +135,25 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
  
         for(var i = 0; i<workItemsResult.length;i++)
         {
-            console.log(workItemsResult[i].id);
             const types = await client.getWorkItem(workItemsResult[i].id,"MSHackathon2020",['System.Title','System.AssignedTo','Microsoft.VSTS.Common.Priority'],new Date(),0);
             
             var workItem : ITableItem = {
                 workItem: { iconProps: { iconName: types.fields["System.AssignedTo"]["_links"]["avatar"]["href"] }, text: types.fields["System.Title"] },
+                wid: workItemsResult[i].id,
                 assignedTo: types.fields["System.AssignedTo"]["displayName"],
-                estimate: types.fields["Microsoft.VSTS.Common.Priority"]
+                priority: types.fields["Microsoft.VSTS.Common.Priority"]
             }
             workItemArray.value.push(workItem);
         }
         return workItemArray;
     }
-
 }
 
 interface ITableItem {
     workItem: ISimpleListCell;
+    wid: number;
     assignedTo: string;
-    estimate: number;
+    priority: number;
 }
 
 function onSizeSizable(event: MouseEvent, index: number, width: number) {
@@ -170,6 +170,14 @@ const sizableColumns = [
         onSize: onSizeSizable
     },
     {
+        id: "wid",
+        name: "Work Item ID",
+        maxWidth: 300,
+        width: new ObservableValue(200),
+        renderCell: renderSimpleCell,
+        onSize: onSizeSizable
+    },
+    {
         id: "assignedTo",
         name: "AssignedTo",
         maxWidth: 300,
@@ -177,7 +185,7 @@ const sizableColumns = [
         renderCell: renderSimpleCell,
         onSize: onSizeSizable
     },
-    { id: "estimate", name: "Estimate", width: new ObservableValue(200), renderCell: renderSimpleCell },
+    { id: "priority", name: "Priority", width: new ObservableValue(200), renderCell: renderSimpleCell },
     ColumnFill
 ];
 
@@ -196,6 +204,15 @@ const moreColumns = [
         width: new ObservableValue(200)
     },
     {
+        id: "wid",
+        maxWidth: 300,
+        name: "Work Item ID",
+        onSize: onSizeMore,
+        readonly: true,
+        renderCell: renderSimpleCell,
+        width: new ObservableValue(100)
+    },
+    {
         id: "assignedTo",
         maxWidth: 300,
         name: "AssignedTo",
@@ -205,8 +222,8 @@ const moreColumns = [
         width: new ObservableValue(100)
     },
     {
-        id: "estimate",
-        name: "Estimate",
+        id: "priority",
+        name: "Priority",
         onSize: onSizeMore,
         readonly: true,
         renderCell: renderSimpleCell,
@@ -224,20 +241,20 @@ const moreColumns = [
     })
 ];
 
-const tableItems = new ArrayItemProvider<ITableItem>([
-    {
-        workItem: { iconProps: { iconName: "Home" }, text: "Test task 1" },
-        assignedTo: "Ankit",
-        estimate: 2
-    },
-    {
-        workItem: { iconProps: { iconName: "Home" }, text: "Test task 2" },
-        assignedTo: "Nishant",
-        estimate: 1
-    },
-    {
-        workItem: { iconProps: { iconName: "Home" }, text: "Test task 3" },
-        assignedTo: "Ashish",
-        estimate: 3
-    }
-]);
+// const tableItems = new ArrayItemProvider<ITableItem>([
+//     {
+//         workItem: { iconProps: { iconName: "Home" }, text: "Test task 1" },
+//         assignedTo: "Ankit",
+//         estimate: 2
+//     },
+//     {
+//         workItem: { iconProps: { iconName: "Home" }, text: "Test task 2" },
+//         assignedTo: "Nishant",
+//         estimate: 1
+//     },
+//     {
+//         workItem: { iconProps: { iconName: "Home" }, text: "Test task 3" },
+//         assignedTo: "Ashish",
+//         estimate: 3
+//     }
+// ]);
