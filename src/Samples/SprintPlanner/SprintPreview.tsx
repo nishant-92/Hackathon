@@ -23,7 +23,6 @@ import { CommonServiceIds, getClient, IProjectPageService } from "azure-devops-e
 import { IWorkItemFormNavigationService, WorkItemTrackingRestClient, WorkItemTrackingServiceIds } from "azure-devops-extension-api/WorkItemTracking";
 
 import { showRootComponent } from "../../Common";
-import IProps from "./Prop";
 
 type callback = (status:boolean) => void;
 type PreviewProp = {
@@ -31,21 +30,30 @@ type PreviewProp = {
     callback:callback;
 }
 
+type PreviewState = {
+    sprintDetails : ArrayItemProvider<ITableItem>;
+    status : boolean;
+}
+
 export default class SprintPreviewContent extends React.Component<PreviewProp, {}> {
     private isDialogOpen : boolean;
     private callback: callback;
     private selection = new ListSelection();
+    private data:PreviewState;
 
     constructor(props: PreviewProp) {
         super(props);
         this.isDialogOpen = props.status;
         this.callback = props.callback;
+        this.data =this.loadTableData();
     }
+
+    
     
     public componentDidMount() {
         SDK.init();
     }
-
+    
     public render(): JSX.Element {
         const onDismiss = () => {
             this.isDialogOpen = false;
@@ -57,7 +65,7 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
                 <div className="page-content">
                     <div className="sample-form-section flex-row flex-center">
                         <Dialog
-                            titleProps={{ text: "Confirm" }}
+                            titleProps={{ text: "Sprint Preview" }}
                             footerButtonProps={[
                                 {
                                     text: "Close",
@@ -67,9 +75,9 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
                             onDismiss={onDismiss}
                         >
                             <Table<Partial<ITableItem>>
-                                ariaLabel="Food Inventory Table"
+                                ariaLabel="Sprint Preview"
                                 columns={sizableColumns}
-                                itemProvider={tableItems}
+                                itemProvider={this.data.sprintDetails}
                                 selection={this.selection}
                                 onSelect={(event, data) => console.log("Select Row - " + data.index)}
                             />
@@ -80,12 +88,35 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
         );
     }
 
+    private loadTableData():PreviewState{
+        return {
+            status:true,
+            sprintDetails : new ArrayItemProvider<ITableItem>([
+                {
+                    workItem: { iconProps: { iconName: "Home" }, text: "Test task 1" },
+                    assignedTo: "Ankit",
+                    estimate: 2
+                },
+                {
+                    workItem: { iconProps: { iconName: "Home" }, text: "Test task 2" },
+                    assignedTo: "Nishant",
+                    estimate: 1
+                },
+                {
+                    workItem: { iconProps: { iconName: "Home" }, text: "Test task 3" },
+                    assignedTo: "Ashish",
+                    estimate: 3
+                }
+            ]),
+        }
+    }
+
 }
 
 interface ITableItem {
-    name: ISimpleListCell;
-    calories?: number;
-    cost?: string;
+    workItem: ISimpleListCell;
+    assignedTo: string;
+    estimate: number;
 }
 
 function onSizeSizable(event: MouseEvent, index: number, width: number) {
@@ -94,22 +125,22 @@ function onSizeSizable(event: MouseEvent, index: number, width: number) {
 
 const sizableColumns = [
     {
-        id: "name",
-        name: "Name",
+        id: "workItem",
+        name: "WorkItem",
         minWidth: 50,
         width: new ObservableValue(300),
         renderCell: renderSimpleCell,
         onSize: onSizeSizable
     },
     {
-        id: "calories",
-        name: "Calories",
+        id: "assignedTo",
+        name: "AssignedTo",
         maxWidth: 300,
         width: new ObservableValue(200),
         renderCell: renderSimpleCell,
         onSize: onSizeSizable
     },
-    { id: "cost", name: "Cost", width: new ObservableValue(200), renderCell: renderSimpleCell },
+    { id: "estimate", name: "Estimate", width: new ObservableValue(200), renderCell: renderSimpleCell },
     ColumnFill
 ];
 
@@ -119,26 +150,26 @@ function onSizeMore(event: MouseEvent, index: number, width: number) {
 
 const moreColumns = [
     {
-        id: "name",
+        id: "workItem",
         minWidth: 50,
-        name: "Name",
+        name: "WorkItem",
         onSize: onSizeMore,
         readonly: true,
         renderCell: renderSimpleCell,
         width: new ObservableValue(200)
     },
     {
-        id: "calories",
+        id: "assignedTo",
         maxWidth: 300,
-        name: "Calories",
+        name: "AssignedTo",
         onSize: onSizeMore,
         readonly: true,
         renderCell: renderSimpleCell,
         width: new ObservableValue(100)
     },
     {
-        id: "cost",
-        name: "Cost",
+        id: "estimate",
+        name: "Estimate",
         onSize: onSizeMore,
         readonly: true,
         renderCell: renderSimpleCell,
@@ -158,17 +189,18 @@ const moreColumns = [
 
 const tableItems = new ArrayItemProvider<ITableItem>([
     {
-        name: { iconProps: { iconName: "Home" }, text: "Potato Chips" },
-        calories: 400,
-        cost: "$2.99"
+        workItem: { iconProps: { iconName: "Home" }, text: "Test task 1" },
+        assignedTo: "Ankit",
+        estimate: 2
     },
     {
-        name: { iconProps: { iconName: "Home" }, text: "Yogurt" },
-        calories: 140,
-        cost: "$3.99"
+        workItem: { iconProps: { iconName: "Home" }, text: "Test task 2" },
+        assignedTo: "Nishant",
+        estimate: 1
     },
     {
-        name: { iconProps: { iconName: "Home" }, text: "Milk" },
-        cost: "$2.50"
+        workItem: { iconProps: { iconName: "Home" }, text: "Test task 3" },
+        assignedTo: "Ashish",
+        estimate: 3
     }
 ]);
