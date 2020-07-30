@@ -13,6 +13,7 @@ import { IListBoxItem } from "azure-devops-ui/ListBox";
 import { Header } from "azure-devops-ui/Header";
 import { Page } from "azure-devops-ui/Page";
 import { Observer } from "azure-devops-ui/Observer";
+import { DropdownMultiSelection } from "azure-devops-ui/Utilities/DropdownSelection";
 
 import { CommonServiceIds, getClient, IProjectPageService } from "azure-devops-extension-api";
 import { showRootComponent } from "../../Common";
@@ -36,6 +37,8 @@ class SprintPlannerContent extends React.Component<{}, {}> {
     private selection = new ListSelection();
     private teamMembers = new ObservableArray<string>();
     private isDialogOpen = new ObservableValue<boolean>(false);
+    private membersSelected = new DropdownMultiSelection();
+    private dropdownItems:Array<IListBoxItem<{}>> =[];
 
     constructor(props: {}) {
         super(props);
@@ -76,71 +79,57 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                     <div className="sample-form-section flex-row flex-center">
                         <div className="flex-column">
                             <label htmlFor="account-picker">Team members:</label>
-                            <Observer checkboxes={this.teamMembers}>
-                                {
-                                    (props: {checkboxes: Array<string>}) => {
-                                        console.log(props.checkboxes, this.teamMembers);
-                                        return props.checkboxes.length ? (
-                                            <div>
-                                                <Checkbox className="sample-account-picker"
-                                                    onChange={(event, checked) => {
-                                                        firstCheckbox.value = checked; 
-                                                        if(checked)
+                                <div style={{ margin: "8px" }}>
+                                    <Observer selection={this.membersSelected}>
+                                        {() => {
+                                            return (
+                                                <Dropdown
+                                                    ariaLabel="Multiselect"
+                                                    actions={[
                                                         {
-                                                            this.state.selectedMembers.push(props.checkboxes[0])
+                                                            className: "bolt-dropdown-action-right-button",
+                                                            disabled: this.membersSelected.selectedCount === 0,
+                                                            iconProps: { iconName: "Clear" },
+                                                            text: "Clear",
+                                                            onClick: () => {
+                                                                this.membersSelected.clear();
+                                                            }
                                                         }
-                                                        else
-                                                        {
-                                                            this.state.selectedMembers = this.state.selectedMembers.filter((item: string) => item === props.checkboxes[0])
-                                                        }
-                                                    }}
-                                                    checked={firstCheckbox}
-                                                    label={props.checkboxes[0]}
+                                                    ]}
+                                                    className="example-dropdown"
+                                                    items={this.dropdownItems}
+                                                    selection={this.membersSelected}
+                                                    placeholder="Select an Option"
+                                                    showFilterBox={true}
                                                 />
-                                                <Checkbox className="sample-account-picker"
-                                                    onChange={(event, checked) => {
-                                                        secondCheckbox.value = checked;
-                                                        if(checked)
-                                                        {
-                                                            this.state.selectedMembers.push(props.checkboxes[1])
-                                                        }
-                                                        else
-                                                        {
-                                                            this.state.selectedMembers = this.state.selectedMembers.filter((item: string) => item === props.checkboxes[1])
-                                                        }
-                                                    }}
-                                                    checked={secondCheckbox}
-                                                    label={props.checkboxes[1]}
-                                                />
-                                                <Checkbox className="sample-account-picker"
-                                                    onChange={(event, checked) => {
-                                                        thirdCheckbox.value = checked;
-                                                        if(checked)
-                                                        {
-                                                            this.state.selectedMembers.push(props.checkboxes[2])
-                                                        }
-                                                        else
-                                                        {
-                                                            this.state.selectedMembers = this.state.selectedMembers.filter((item: string) => item === props.checkboxes[2])
-                                                        }
-                                                    }}
-                                                    checked={thirdCheckbox}
-                                                    label={props.checkboxes[2]}
-                                                />
-                                                </div>
-                                        ) : (
-                                            <div>loading</div>
-                                        );
-                                    }
-                                }
-                            </Observer>
-                            <Button className="sample-work-item-button" text="Preview Sprint" onClick={() => {;this.setState(() => ({ showMessage: true }))}} />
-                            {this.state.showMessage && <SprintPreviewContent {...{status: this.state.showMessage, selectedMembers: this.state.selectedMembers, selectedDuration: this.state.selectedDuration ,callback: (status:boolean)=>{this.setState(() => ({ showMessage: status }))}}}/>}
+                                            );
+                                        }}
+                                    </Observer>
+                                </div>
+                            <Button className="sample-work-item-button" text="Preview Sprint" onClick={() => {
+                                    this.prepareSelectedItems();
+                                    console.log("printing selected members for dropdown+ ankit " + this.state.selectedMembers)
+                                    this.setState(() => ({ showMessage: true }))
+                                }} />
+                            {this.state.showMessage && <SprintPreviewContent {...{status: this.state.showMessage, selectedMembers: this.state.selectedMembers, selectedDuration: this.state.selectedDuration ,callback: (status:boolean)=>{this.setState(() => ({ showMessage: status,selectedMembers:[] }))}}}/>}
                         </div>
                     </div>
                 </div>
             </Page>
         );
+    }
+
+    private prepareSelectedItems():void{
+        console.log(" value of memberselected from planner  " +this.membersSelected.value);
+        for(var i =0; i< this.membersSelected.value.length;i++){
+           var temp = this.membersSelected.value[i]; 
+           console.log(" value of temp from planner  " +temp);
+           for(var j=temp.beginIndex;j<=temp.endIndex;j++) {
+               var name = this.dropdownItems[j].text
+               if(name != undefined)
+               this.state.selectedMembers.push(name);
+           }
+        }
     }
 
     private async loadAccounts(): Promise<void> {
@@ -158,6 +147,14 @@ class SprintPlannerContent extends React.Component<{}, {}> {
         }
 
         this.teamMembers.change(0, ...teamMemberNames);
+        for(var i =0; i< teamMemberNames.length;i++){
+            console.log("Printing name from SprintPlanner +ankit "+teamMemberNames[i])
+            var item = {
+                id:teamMemberNames[i],
+                text:teamMemberNames[i]
+            }
+            this.dropdownItems[i] = item;
+        }
     }
 }
 
