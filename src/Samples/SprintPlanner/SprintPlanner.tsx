@@ -111,7 +111,7 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                                     console.log("printing selected members for dropdown+ ankit " + this.state.selectedMembers)
                                     this.setState(() => ({ showMessage: true }))
                                 }} />
-                            {this.state.showMessage && <SprintPreviewContent {...{status: this.state.showMessage, selectedMembers: this.state.selectedMembers, selectedDuration: this.state.selectedDuration ,callback: (status:boolean)=>{this.setState(() => ({ showMessage: status,selectedMembers:[] }))}}}/>}
+                            {this.state.showMessage && <SprintPreviewContent {...{status: this.state.showMessage, selectedMembers: this.state.selectedMembers, selectedDuration: this.state.selectedDuration ,callback: (status:boolean)=>{this.setState(() => ({ selectedDuration:[],showMessage: status,selectedMembers:[] }))}}}/>}
                         </div>
                     </div>
                 </div>
