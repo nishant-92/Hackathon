@@ -107,30 +107,41 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
     private async allWorkItems() {
         const client = getClient(WorkItemTrackingRestClient);
         const model: Wiql = {
-            query : "select * From WorkItems where [State] = 'Active' OR [State] = 'New' Order By [System.AssignedTo] Asc, [id] Asc"
+            query : "select * From WorkItems where [State] = 'Active' OR [State] = 'New' Order By [System.AssignedTo] Asc, [Microsoft.VSTS.Common.Priority] Asc"
         }
         const types = await client.queryByWiql(model,"MSHackathon2020","MSHackathon2020",false,100);
         var workItemsResult = types.workItems;
         var workItemArray = new ArrayItemProvider<ITableItem>([]);
         
-        var map = new Map();
-        map.set(2,4);map.set(3,5);map.set(5,3);map.set(8,3);
-        map.set(9,7);map.set(10,8);map.set(11,2);map.set(12,3);
+        var estimate = new Map();
+        estimate.set(2,4);estimate.set(3,5);estimate.set(5,3);estimate.set(8,3);
+        estimate.set(9,7);estimate.set(10,8);estimate.set(11,2);estimate.set(12,3);
         var sprintDuration = parseInt(this.props.selectedDuration[0][0]);
+        sprintDuration = sprintDuration*5;
+
+        var userDuration = new Map();
         for(var i = 0; i<workItemsResult.length;i++)
         {
             const types = await client.getWorkItem(workItemsResult[i].id,"MSHackathon2020",['System.Title','System.AssignedTo','Microsoft.VSTS.Common.Priority'],new Date(),0);
 
             if(this.props.selectedMembers.find(Element =>  Element == types.fields["System.AssignedTo"]["displayName"]))
             {
-                var workItem : ITableItem = {
-                    workItem: { iconProps: { iconName: types.fields["System.AssignedTo"]["_links"]["avatar"]["href"] }, text: types.fields["System.Title"] },
-                    wid: workItemsResult[i].id,
-                    assignedTo: types.fields["System.AssignedTo"]["displayName"],
-                    estimate: map.get(workItemsResult[i].id),
-                    priority: types.fields["Microsoft.VSTS.Common.Priority"],
+                if(!userDuration.has(types.fields["System.AssignedTo"]["displayName"]))
+                {
+                    userDuration.set(types.fields["System.AssignedTo"]["displayName"],0);
                 }
-                workItemArray.value.push(workItem);
+                if(userDuration.get(types.fields["System.AssignedTo"]["displayName"]) + estimate.get(workItemsResult[i].id) <= sprintDuration)
+                {
+                    var workItem : ITableItem = {
+                        workItem: { iconProps: { iconName: types.fields["System.AssignedTo"]["_links"]["avatar"]["href"] }, text: types.fields["System.Title"] },
+                        wid: workItemsResult[i].id,
+                        assignedTo: types.fields["System.AssignedTo"]["displayName"],
+                        estimate: estimate.get(workItemsResult[i].id),
+                        priority: types.fields["Microsoft.VSTS.Common.Priority"],
+                    }
+                    workItemArray.value.push(workItem);
+                    userDuration.set(types.fields["System.AssignedTo"]["displayName"],userDuration.get(types.fields["System.AssignedTo"]["displayName"])+estimate.get(workItemsResult[i].id));
+                }
             }
         }
         return workItemArray;

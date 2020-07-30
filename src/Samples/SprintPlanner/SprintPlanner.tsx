@@ -136,8 +136,6 @@ class SprintPlannerContent extends React.Component<{}, {}> {
                             </Observer>
                             <Button className="sample-work-item-button" text="Preview Sprint" onClick={() => {;this.setState(() => ({ showMessage: true }))}} />
                             {this.state.showMessage && <SprintPreviewContent {...{status: this.state.showMessage, selectedMembers: this.state.selectedMembers, selectedDuration: this.state.selectedDuration ,callback: (status:boolean)=>{this.setState(() => ({ showMessage: status }))}}}/>}
-                            <Button className="sample-work-item-button" text="Generate Sprint" onClick={() => {;this.setState(() => ({ showMessage: true }))}} />
-                            {this.state.showMessage && <SprintPreviewContent {...{status: this.state.showMessage, selectedMembers: this.state.selectedMembers, selectedDuration: this.state.selectedDuration ,callback: (status:boolean)=>{this.setState(() => ({ showMessage: status }))}}}/>}
                         </div>
                     </div>
                 </div>
