@@ -96,31 +96,6 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
         );
     }
 
-
-    // private loadTableData():PreviewState{
-
-    //     return {
-    //         status:true,
-    //         sprintDetails : new ArrayItemProvider<ITableItem>([
-    //             {
-    //                 workItem: { iconProps: { iconName: "Home" }, text: "Test task 1" },
-    //                 assignedTo: "Ankit",
-    //                 estimate: 2
-    //             },
-    //             {
-    //                 workItem: { iconProps: { iconName: "Home" }, text: "Test task 2" },
-    //                 assignedTo: "Nishant",
-    //                 estimate: 1
-    //             },
-    //             {
-    //                 workItem: { iconProps: { iconName: "Home" }, text: "Test task 3" },
-    //                 assignedTo: "Ashish",
-    //                 estimate: 3
-    //             }
-    //         ]),
-    //     }
-    // }
-
     private loadData():void{
         var promise = this.allWorkItems();
         promise.then((data) => {this.setState({
@@ -132,12 +107,16 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
     private async allWorkItems() {
         const client = getClient(WorkItemTrackingRestClient);
         const model: Wiql = {
-            query : "select * From WorkItems where [State] = 'Active' OR [State] = 'New' "
+            query : "select * From WorkItems where [State] = 'Active' OR [State] = 'New' Order By [System.AssignedTo] Asc, [id] Asc"
         }
         const types = await client.queryByWiql(model,"MSHackathon2020","MSHackathon2020",false,100);
         var workItemsResult = types.workItems;
         var workItemArray = new ArrayItemProvider<ITableItem>([]);
         
+        var map = new Map();
+        map.set(2,4);map.set(3,5);map.set(5,3);map.set(8,3);
+        map.set(9,7);map.set(10,8);map.set(11,2);map.set(12,3);
+        var sprintDuration = parseInt(this.props.selectedDuration[0][0]);
         for(var i = 0; i<workItemsResult.length;i++)
         {
             const types = await client.getWorkItem(workItemsResult[i].id,"MSHackathon2020",['System.Title','System.AssignedTo','Microsoft.VSTS.Common.Priority'],new Date(),0);
@@ -148,7 +127,8 @@ export default class SprintPreviewContent extends React.Component<PreviewProp, {
                     workItem: { iconProps: { iconName: types.fields["System.AssignedTo"]["_links"]["avatar"]["href"] }, text: types.fields["System.Title"] },
                     wid: workItemsResult[i].id,
                     assignedTo: types.fields["System.AssignedTo"]["displayName"],
-                    priority: types.fields["Microsoft.VSTS.Common.Priority"]
+                    estimate: map.get(workItemsResult[i].id),
+                    priority: types.fields["Microsoft.VSTS.Common.Priority"],
                 }
                 workItemArray.value.push(workItem);
             }
@@ -161,6 +141,7 @@ interface ITableItem {
     workItem: ISimpleListCell;
     wid: number;
     assignedTo: string;
+    estimate: number;
     priority: number;
 }
 
@@ -188,6 +169,14 @@ const sizableColumns = [
     {
         id: "assignedTo",
         name: "AssignedTo",
+        maxWidth: 300,
+        width: new ObservableValue(200),
+        renderCell: renderSimpleCell,
+        onSize: onSizeSizable
+    },
+    {
+        id: "estimate",
+        name: "Estimate",
         maxWidth: 300,
         width: new ObservableValue(200),
         renderCell: renderSimpleCell,
@@ -230,6 +219,14 @@ const moreColumns = [
         width: new ObservableValue(100)
     },
     {
+        id: "estimate",
+        name: "Estimate",
+        onSize: onSizeMore,
+        readonly: true,
+        renderCell: renderSimpleCell,
+        width: new ObservableValue(100)
+    },
+    {
         id: "priority",
         name: "Priority",
         onSize: onSizeMore,
@@ -248,21 +245,3 @@ const moreColumns = [
         };
     })
 ];
-
-// const tableItems = new ArrayItemProvider<ITableItem>([
-//     {
-//         workItem: { iconProps: { iconName: "Home" }, text: "Test task 1" },
-//         assignedTo: "Ankit",
-//         estimate: 2
-//     },
-//     {
-//         workItem: { iconProps: { iconName: "Home" }, text: "Test task 2" },
-//         assignedTo: "Nishant",
-//         estimate: 1
-//     },
-//     {
-//         workItem: { iconProps: { iconName: "Home" }, text: "Test task 3" },
-//         assignedTo: "Ashish",
-//         estimate: 3
-//     }
-// ]);
